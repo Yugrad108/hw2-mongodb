@@ -11,12 +11,40 @@ import { parseSortParams } from '../utils/parseSortParams.js';
 import { parseFilterParams } from '../utils/parseFilterParams.js';
 
 const NOT_FOUND_MSG = 'Contact not found';
+const ALLOWED_TYPES = ['home', 'personal', 'work'];
 
 export const getContactsController = async (req, res, next) => {
   try {
     const { page, perPage } = parsePaginationParams(req.query);
     const { sortBy, sortOrder } = parseSortParams(req.query);
     const filter = parseFilterParams(req.query);
+
+    // ✅ Валидация contactType с возвратом 400 ошибки при неверном значении
+    // Если в query есть contactType, но парсер вернул undefined — значит невалидный тип:
+    if (
+      req.query.contactType !== undefined &&
+      filter.contactType === undefined
+    ) {
+      return next(
+        createHttpError(
+          400,
+          `Invalid contact type filter: '${
+            req.query.contactType
+          }'. Allowed values: ${ALLOWED_TYPES.join(', ')}.`,
+        ),
+      );
+    }
+
+    // if (filter.contactType && !ALLOWED_TYPES.includes(filter.contactType)) {
+    //   return next(
+    //     createHttpError(
+    //       400, // Код ошибки который значит невалидный тип
+    //       `Invalid contact type filter: '${
+    //         filter.contactType
+    //       }'. Allowed values: ${ALLOWED_TYPES.join(', ')}.`,
+    //     ),
+    //   );
+    // }
 
     const contacts = await getAllContacts({
       page,

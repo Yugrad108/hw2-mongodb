@@ -27,6 +27,13 @@ export const getAllContacts = async ({
     dbFilter.contactType = filter.contactType;
   }
 
+  // ✅ Улучшенная проверка contactType
+  if (typeof filter.contactType === 'string' && filter.contactType.trim()) {
+    dbFilter.contactType = filter.contactType.trim();
+  }
+
+  console.log('DB Filter:', dbFilter); // ✅ Для отладки
+
   const totalItems = await ContactsCollection.countDocuments(dbFilter);
 
   const data = await ContactsCollection.find(dbFilter)
