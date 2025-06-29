@@ -19,8 +19,6 @@ export const getContactsController = async (req, res, next) => {
     const { sortBy, sortOrder } = parseSortParams(req.query);
     const filter = parseFilterParams(req.query);
 
-    // ✅ Валидация contactType с возвратом 400 ошибки при неверном значении
-    // Если в query есть contactType, но парсер вернул undefined — значит невалидный тип:
     if (
       req.query.contactType !== undefined &&
       filter.contactType === undefined
@@ -41,7 +39,7 @@ export const getContactsController = async (req, res, next) => {
       sortBy,
       sortOrder,
       filter,
-      userId: req.user._id, // Добавлено — фильтрация по текущему userId
+      userId: req.user._id,
     });
 
     if (!contacts) {
@@ -61,7 +59,6 @@ export const getContactsController = async (req, res, next) => {
 export const getContactByIdController = async (req, res, next) => {
   try {
     const { contactId } = req.params;
-    // Добавлен userId в вызов сервиса для безопасности
     const contact = await getContactById(contactId, req.user._id);
 
     if (!contact) {
@@ -80,7 +77,6 @@ export const getContactByIdController = async (req, res, next) => {
 
 export const createContactController = async (req, res, next) => {
   try {
-    // Добавлен userId в создаваемый контакт (обязательная связь с пользователем)
     const contact = await createContact(req.body, req.user._id);
     res.status(201).json({
       status: 201,
@@ -95,7 +91,6 @@ export const createContactController = async (req, res, next) => {
 export const patchContactController = async (req, res, next) => {
   try {
     const { contactId } = req.params;
-    // Добавлен userId в обновление данных контакта
     const result = await updateContact(contactId, req.body, req.user._id);
 
     if (!result) {
@@ -115,7 +110,6 @@ export const patchContactController = async (req, res, next) => {
 export const deleteContactController = async (req, res, next) => {
   try {
     const { contactId } = req.params;
-    // Добавлен userId при удалении контакта — нельзя удалить чужой контакт
     const contact = await deleteContact(contactId, req.user._id);
 
     if (!contact) {

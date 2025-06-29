@@ -9,11 +9,10 @@ const usersSchema = new Schema(
   { timestamps: true, versionKey: false },
 );
 
-// Метод toJSON для сокрытия пароля
 usersSchema.methods.toJSON = function () {
-  const userObject = this.toObject(); // Преобразует Mongoose-документ в обычный JS-объект
-  delete userObject.password; // Удаляет поле password из объекта
-  return userObject; // Возвращает изменённый объект
+  const userObject = this.toObject();
+  delete userObject.password;
+  return userObject;
 };
 
 export const UsersCollection = model('users', usersSchema);

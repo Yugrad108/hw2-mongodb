@@ -13,7 +13,6 @@ export const getAllContacts = async ({
   const limit = perPage;
   const skip = (page - 1) * perPage;
 
-  // Формируем объект фильтра
   const dbFilter = { userId };
 
   if (typeof filter.name === 'string' && filter.name.trim()) {
@@ -32,10 +31,6 @@ export const getAllContacts = async ({
     dbFilter.contactType = filter.contactType.trim();
   }
 
-  // Подсчёт общего количества документов
-  // const totalItems = await ContactsCollection.countDocuments(dbFilter);
-
-  // Выполняем параллельно подсчёт и получение данных с пагинацией
   const [totalItems, data] = await Promise.all([
     ContactsCollection.countDocuments(dbFilter),
     ContactsCollection.find(dbFilter)
@@ -45,7 +40,6 @@ export const getAllContacts = async ({
       .exec(),
   ]);
 
-  // Подсчёт данных для пагинации
   const paginationData = calculatePaginationData(totalItems, perPage, page);
 
   return {
@@ -59,7 +53,6 @@ export const getContactById = async (contactId, userId) => {
 };
 
 export const createContact = async (payload, userId) => {
-  // Явно привязываем контакт к пользователю
   const contactPayload = { ...payload, userId };
   return ContactsCollection.create(contactPayload);
 };
@@ -85,68 +78,3 @@ export const updateContact = async (contactId, payload, userId) => {
 export const deleteContact = async (contactId, userId) => {
   return ContactsCollection.findOneAndDelete({ _id: contactId, userId });
 };
-
-//   const dbFilter = {};
-
-//   if (typeof filter.name === 'string' && filter.name.trim()) {
-//     dbFilter.name = { $regex: filter.name, $options: 'i' };
-//   }
-//   if (filter.phoneNumber) {
-//     dbFilter.phoneNumber = { $regex: filter.phoneNumber };
-//   }
-//   if (typeof filter.email === 'string' && filter.email.trim()) {
-//     dbFilter.email = { $regex: filter.email, $options: 'i' };
-//   }
-//   if (typeof filter.isFavourite === 'boolean') {
-//     dbFilter.isFavourite = filter.isFavourite;
-//   }
-//   if (filter.contactType) {
-//     dbFilter.contactType = filter.contactType;
-//   }
-
-//   // ✅ Улучшенная проверка contactType
-//   if (typeof filter.contactType === 'string' && filter.contactType.trim()) {
-//     dbFilter.contactType = filter.contactType.trim();
-//   }
-
-//   console.log('DB Filter:', dbFilter); // ✅ Для отладки
-
-//   const totalItems = await ContactsCollection.countDocuments(dbFilter);
-
-//   const data = await ContactsCollection.find(dbFilter)
-//     .skip((page - 1) * perPage)
-//     .limit(perPage)
-//     .sort({ [sortBy]: sortOrder })
-//     .exec();
-
-//   const paginationData = calculatePaginationData(page, perPage, totalItems);
-
-//   return {
-//     data,
-//     ...paginationData,
-//   };
-// };
-
-// export const getContactById = async (contactId) => {
-//   return ContactsCollection.findById(contactId);
-// };
-
-// export const createContact = async (payload) => {
-//   return ContactsCollection.create(payload);
-// };
-
-// export const updateContact = async (
-//   contactId,
-//   payload,
-//   options = { new: true },
-// ) => {
-//   return ContactsCollection.findOneAndUpdate(
-//     { _id: contactId },
-//     payload,
-//     options,
-//   );
-// };
-
-// export const deleteContact = async (contactId) => {
-//   return ContactsCollection.findOneAndDelete({ _id: contactId });
-// };
