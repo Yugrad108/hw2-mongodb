@@ -35,23 +35,13 @@ export const getContactsController = async (req, res, next) => {
       );
     }
 
-    // if (filter.contactType && !ALLOWED_TYPES.includes(filter.contactType)) {
-    //   return next(
-    //     createHttpError(
-    //       400, // Код ошибки который значит невалидный тип
-    //       `Invalid contact type filter: '${
-    //         filter.contactType
-    //       }'. Allowed values: ${ALLOWED_TYPES.join(', ')}.`,
-    //     ),
-    //   );
-    // }
-
     const contacts = await getAllContacts({
       page,
       perPage,
       sortBy,
       sortOrder,
       filter,
+      userId: req.user._id, // Добавлено — фильтрация по текущему userId
     });
 
     if (!contacts) {
@@ -71,7 +61,8 @@ export const getContactsController = async (req, res, next) => {
 export const getContactByIdController = async (req, res, next) => {
   try {
     const { contactId } = req.params;
-    const contact = await getContactById(contactId);
+    // Добавлен userId в вызов сервиса для безопасности
+    const contact = await getContactById(contactId, req.user._id);
 
     if (!contact) {
       return next(createHttpError(404, NOT_FOUND_MSG));
@@ -89,7 +80,8 @@ export const getContactByIdController = async (req, res, next) => {
 
 export const createContactController = async (req, res, next) => {
   try {
-    const contact = await createContact(req.body);
+    // Добавлен userId в создаваемый контакт (обязательная связь с пользователем)
+    const contact = await createContact(req.body, req.user._id);
     res.status(201).json({
       status: 201,
       message: 'Successfully created a contact',
@@ -103,7 +95,8 @@ export const createContactController = async (req, res, next) => {
 export const patchContactController = async (req, res, next) => {
   try {
     const { contactId } = req.params;
-    const result = await updateContact(contactId, req.body);
+    // Добавлен userId в обновление данных контакта
+    const result = await updateContact(contactId, req.body, req.user._id);
 
     if (!result) {
       return next(createHttpError(404, NOT_FOUND_MSG));
@@ -122,7 +115,8 @@ export const patchContactController = async (req, res, next) => {
 export const deleteContactController = async (req, res, next) => {
   try {
     const { contactId } = req.params;
-    const contact = await deleteContact(contactId);
+    // Добавлен userId при удалении контакта — нельзя удалить чужой контакт
+    const contact = await deleteContact(contactId, req.user._id);
 
     if (!contact) {
       return next(createHttpError(404, NOT_FOUND_MSG));
