@@ -13,6 +13,23 @@ import { parseFilterParams } from '../utils/parseFilterParams.js';
 const NOT_FOUND_MSG = 'Contact not found';
 const ALLOWED_TYPES = ['home', 'personal', 'work'];
 
+// Функция форматирования контакта с нужным порядком ключей
+function formatContact(contact) {
+  if (!contact) return null;
+
+  return {
+    _id: contact._id,
+    name: contact.name,
+    phoneNumber: contact.phoneNumber,
+    email: contact.email,
+    isFavourite: contact.isFavourite,
+    contactType: contact.contactType,
+    userId: contact.userId,
+    createdAt: contact.createdAt,
+    updatedAt: contact.updatedAt,
+  };
+}
+
 export const getContactsController = async (req, res, next) => {
   try {
     const { page, perPage } = parsePaginationParams(req.query);
@@ -45,11 +62,16 @@ export const getContactsController = async (req, res, next) => {
     if (!contacts) {
       return next(createHttpError(404, NOT_FOUND_MSG));
     }
-
+    // Форматируем каждый контакт в массиве
+    const formattedContacts = {
+      ...contacts,
+      data: contacts.data.map(formatContact),
+    };
     res.json({
       status: 200,
       message: 'Successfully found contacts!',
-      data: contacts,
+      data: formattedContacts, // ✅ используем переменную здесь
+      // data: contacts,
     });
   } catch (error) {
     next(error);
@@ -68,7 +90,9 @@ export const getContactByIdController = async (req, res, next) => {
     res.json({
       status: 200,
       message: `Successfully found contact with id ${contactId}!`,
-      data: contact,
+      // ✅ Форматируем объект контакта перед отправкой
+      data: formatContact(contact),
+      // data: contact,
     });
   } catch (error) {
     next(error);
@@ -81,7 +105,9 @@ export const createContactController = async (req, res, next) => {
     res.status(201).json({
       status: 201,
       message: 'Successfully created a contact',
-      data: contact,
+      // ✅ Форматируем объект контакта перед отправкой
+      data: formatContact(contact),
+      // data: contact,
     });
   } catch (error) {
     next(error);
@@ -96,11 +122,14 @@ export const patchContactController = async (req, res, next) => {
     if (!result) {
       return next(createHttpError(404, NOT_FOUND_MSG));
     }
+    // ✅ Распаковываем объект и форматируем контакт
+    const contact = result.contact || result;
 
     res.status(200).json({
       status: 200,
       message: 'Successfully patched a contact!',
-      data: result,
+      data: formatContact(contact), // ✅
+      // data: result,
     });
   } catch (error) {
     next(error);

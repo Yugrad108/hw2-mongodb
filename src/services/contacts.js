@@ -68,11 +68,16 @@ export const updateContact = async (contactId, payload, userId) => {
   );
 
   if (!rawResult || !rawResult.value) return null;
+  return rawResult.value;
 
-  return {
-    contact: rawResult.value,
-    isNew: Boolean(rawResult?.lastErrorObject?.upserted),
-  };
+  // isNew — булево значение, показывающее, был ли создан новый объект в результате операции (например, upsert, если вы его используете)
+  // Такой вариант полезен, если вам нужно вернуть с сущностью дополнительные служебные данные, которые могут быть важны бизнес-логике или фронтенду.
+  //Если в будущем захотим добавить ещё какую-то метаинформацию (например, время обновления, статус и т. п.) — это удобно.
+
+  // return {
+  //   contact: rawResult.value,
+  //   // isNew: Boolean(rawResult?.lastErrorObject?.upserted),
+  // };
 };
 
 export const deleteContact = async (contactId, userId) => {
