@@ -16,7 +16,6 @@ import { saveFileToCloudinary } from '../utils/saveFileToCloudinary.js';
 const NOT_FOUND_MSG = 'Contact not found';
 const ALLOWED_TYPES = ['home', 'personal', 'work'];
 
-// Функция форматирования контакта с нужным порядком ключей
 function formatContact(contact) {
   if (!contact) return null;
 
@@ -66,7 +65,7 @@ export const getContactsController = async (req, res, next) => {
     if (!contacts) {
       return next(createHttpError(404, NOT_FOUND_MSG));
     }
-    // Форматируем каждый контакт в массиве
+
     const formattedContacts = {
       ...contacts,
       data: contacts.data.map(formatContact),
@@ -74,8 +73,7 @@ export const getContactsController = async (req, res, next) => {
     res.json({
       status: 200,
       message: 'Successfully found contacts!',
-      data: formattedContacts, // ✅ используем переменную здесь
-      // data: contacts,
+      data: formattedContacts,
     });
   } catch (error) {
     next(error);
@@ -94,29 +92,12 @@ export const getContactByIdController = async (req, res, next) => {
     res.json({
       status: 200,
       message: `Successfully found contact with id ${contactId}!`,
-      // ✅ Форматируем объект контакта перед отправкой
       data: formatContact(contact),
-      // data: contact,
     });
   } catch (error) {
     next(error);
   }
 };
-
-// export const createContactController = async (req, res, next) => {
-//   try {
-//     const contact = await createContact(req.body, req.user._id);
-//     res.status(201).json({
-//       status: 201,
-//       message: 'Successfully created a contact',
-//       // ✅ Форматируем объект контакта перед отправкой
-//       data: formatContact(contact),
-//       // data: contact,
-//     });
-//   } catch (error) {
-//     next(error);
-//   }
-// };
 
 export const createContactController = async (req, res, next) => {
   try {
@@ -131,7 +112,6 @@ export const createContactController = async (req, res, next) => {
       }
     }
 
-    // Собираем данные контакта, добавляем URL фото
     const contactData = {
       ...req.body,
       photo: photoUrl,
@@ -149,28 +129,6 @@ export const createContactController = async (req, res, next) => {
   }
 };
 
-// export const patchContactController = async (req, res, next) => {
-//   try {
-//     const { contactId } = req.params;
-//     const result = await updateContact(contactId, req.body, req.user._id);
-
-//     if (!result) {
-//       return next(createHttpError(404, NOT_FOUND_MSG));
-//     }
-//     // ✅ Распаковываем объект и форматируем контакт
-//     const contact = result.contact || result;
-
-//     res.status(200).json({
-//       status: 200,
-//       message: 'Successfully patched a contact!',
-//       data: formatContact(contact), // ✅
-//       // data: result,
-//     });
-//   } catch (error) {
-//     next(error);
-//   }
-// };
-
 export const patchContactController = async (req, res, next) => {
   try {
     const { contactId } = req.params;
@@ -186,7 +144,6 @@ export const patchContactController = async (req, res, next) => {
       }
     }
 
-    // Обновляем поля, фото меняется только если файл загружен
     const updateData = { ...req.body };
     if (photoUrl) {
       updateData.photo = photoUrl;
@@ -194,22 +151,16 @@ export const patchContactController = async (req, res, next) => {
 
     const result = await updateContact(contactId, updateData, req.user._id);
 
-    // const result = await updateContact(contactId, {
-    //   ...req.body,
-    //   photo: photoUrl,
-    // });
-
     if (!result) {
       return next(createHttpError(404, 'Contact not found'));
     }
 
-    // ✅ Распаковываем объект и форматируем контакт
     const contact = result.contact || result;
 
     res.status(200).json({
       status: 200,
       message: 'Successfully patched a contact!',
-      data: formatContact(contact), // ✅
+      data: formatContact(contact),
     });
   } catch (error) {
     next(error);
