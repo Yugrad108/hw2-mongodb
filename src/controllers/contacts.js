@@ -9,6 +9,9 @@ import {
 import { parsePaginationParams } from '../utils/parsePaginationParams.js';
 import { parseSortParams } from '../utils/parseSortParams.js';
 import { parseFilterParams } from '../utils/parseFilterParams.js';
+import { saveFileToUploadDir } from '../utils/saveFileToUploadDir.js';
+import { getEnvVar } from '../utils/getEnvVar.js';
+import { saveFileToCloudinary } from '../utils/saveFileToCloudinary.js';
 
 const NOT_FOUND_MSG = 'Contact not found';
 const ALLOWED_TYPES = ['home', 'personal', 'work'];
@@ -25,6 +28,7 @@ function formatContact(contact) {
     isFavourite: contact.isFavourite,
     contactType: contact.contactType,
     userId: contact.userId,
+    photo: contact.photo,
     createdAt: contact.createdAt,
     updatedAt: contact.updatedAt,
   };
@@ -99,29 +103,106 @@ export const getContactByIdController = async (req, res, next) => {
   }
 };
 
+// export const createContactController = async (req, res, next) => {
+//   try {
+//     const contact = await createContact(req.body, req.user._id);
+//     res.status(201).json({
+//       status: 201,
+//       message: 'Successfully created a contact',
+//       // ✅ Форматируем объект контакта перед отправкой
+//       data: formatContact(contact),
+//       // data: contact,
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
+
 export const createContactController = async (req, res, next) => {
   try {
-    const contact = await createContact(req.body, req.user._id);
+    const photo = req.file;
+
+    let photoUrl;
+    if (photo) {
+      if (getEnvVar('ENABLE_CLOUDINARY')?.toLowerCase() === 'true') {
+        photoUrl = await saveFileToCloudinary(photo);
+      } else {
+        photoUrl = await saveFileToUploadDir(photo);
+      }
+    }
+
+    // Собираем данные контакта, добавляем URL фото
+    const contactData = {
+      ...req.body,
+      photo: photoUrl,
+    };
+
+    const contact = await createContact(contactData, req.user._id);
+
     res.status(201).json({
       status: 201,
       message: 'Successfully created a contact',
-      // ✅ Форматируем объект контакта перед отправкой
       data: formatContact(contact),
-      // data: contact,
     });
   } catch (error) {
     next(error);
   }
 };
 
+// export const patchContactController = async (req, res, next) => {
+//   try {
+//     const { contactId } = req.params;
+//     const result = await updateContact(contactId, req.body, req.user._id);
+
+//     if (!result) {
+//       return next(createHttpError(404, NOT_FOUND_MSG));
+//     }
+//     // ✅ Распаковываем объект и форматируем контакт
+//     const contact = result.contact || result;
+
+//     res.status(200).json({
+//       status: 200,
+//       message: 'Successfully patched a contact!',
+//       data: formatContact(contact), // ✅
+//       // data: result,
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
+
 export const patchContactController = async (req, res, next) => {
   try {
     const { contactId } = req.params;
-    const result = await updateContact(contactId, req.body, req.user._id);
+    const photo = req.file;
+
+    let photoUrl;
+
+    if (photo) {
+      if (getEnvVar('ENABLE_CLOUDINARY') === 'true') {
+        photoUrl = await saveFileToCloudinary(photo);
+      } else {
+        photoUrl = await saveFileToUploadDir(photo);
+      }
+    }
+
+    // Обновляем поля, фото меняется только если файл загружен
+    const updateData = { ...req.body };
+    if (photoUrl) {
+      updateData.photo = photoUrl;
+    }
+
+    const result = await updateContact(contactId, updateData, req.user._id);
+
+    // const result = await updateContact(contactId, {
+    //   ...req.body,
+    //   photo: photoUrl,
+    // });
 
     if (!result) {
-      return next(createHttpError(404, NOT_FOUND_MSG));
+      return next(createHttpError(404, 'Contact not found'));
     }
+
     // ✅ Распаковываем объект и форматируем контакт
     const contact = result.contact || result;
 
@@ -129,7 +210,6 @@ export const patchContactController = async (req, res, next) => {
       status: 200,
       message: 'Successfully patched a contact!',
       data: formatContact(contact), // ✅
-      // data: result,
     });
   } catch (error) {
     next(error);
